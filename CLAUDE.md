@@ -3,7 +3,7 @@
 ## Informações Gerais
 
 - **Nome do Projeto**: extrator-leads
-- **Versão Atual**: 0.2.0
+- **Versão Atual**: 0.3.1
 - **Versionamento**: Semantic Versioning (https://semver.org/)
 - **Autor**: Marcos <marcosf63@gmail.com>
 - **Licença**: MIT
@@ -107,6 +107,22 @@ uv run python main.py
 - `extrator version`: Exibe versão
 
 ## Histórico de Versões
+
+### 0.3.1 (2025-11-12)
+- **feat**: Implementação de rolagem infinita para páginas de busca do Google Maps
+- **feat**: Adição de parâmetro `--limit` para controlar número de leads extraídos
+- **feat**: Detecção automática de fim de rolagem (3 tentativas sem novos resultados)
+- **feat**: Suporte completo a páginas de busca (não apenas estabelecimentos individuais)
+- **feat**: Remoção de duplicatas na lista de resultados
+- **arch**: BaseExtractor agora aceita parâmetro `limit` opcional
+- **arch**: ExtractorFactory repassa `limit` para os extractors
+- **docs**: Atualização de documentação com exemplos de uso do `--limit`
+
+### 0.3.0 (2025-11-12)
+- **feat**: Suporte a páginas de busca do Google Maps
+- **feat**: Extração em lote de múltiplos estabelecimentos
+- **fix**: Validação de URLs de websites antes de criar Lead
+- **fix**: Correção na extração de nomes de estabelecimentos
 
 ### 0.2.0 (2025-11-12)
 - **feat**: Implementação completa do CLI com Typer

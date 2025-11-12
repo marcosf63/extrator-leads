@@ -4,11 +4,13 @@ Ferramenta CLI para extração de leads de múltiplas plataformas (Google Maps, 
 
 ## Versão
 
-0.2.0
+0.3.1
 
 ## Características
 
 - Extração de leads do Google Maps (nome, telefone, email, website)
+- Suporte a páginas de busca com rolagem infinita
+- Limite configurável de leads a extrair
 - Arquitetura expansível para Facebook e LinkedIn (em desenvolvimento)
 - Exportação automática para CSV
 - Interface CLI intuitiva com Typer
@@ -49,6 +51,12 @@ extrator extract "URL" --output meus_leads.csv
 
 # Adicionar a um arquivo existente
 extrator extract "URL" --output leads.csv --append
+
+# Limitar número de leads extraídos
+extrator extract "URL" --limit 50
+
+# Extrair de uma página de busca do Google Maps
+extrator extract "https://www.google.com/maps/search/advogados+sobral" --limit 100
 ```
 
 ### Listar arquivos CSV gerados

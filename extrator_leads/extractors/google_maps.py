@@ -71,10 +71,29 @@ class GoogleMapsExtractor(BaseExtractor):
         except:
             return leads
 
-        # Rola a página para carregar mais resultados
-        for _ in range(2):
+        print("Rolando a página para carregar todos os resultados...")
+
+        # Rola a página até carregar todos os resultados
+        tentativas_sem_novos = 0
+        contagem_anterior = 0
+
+        while tentativas_sem_novos < 3:
+            # Rola até o final do feed
             page.evaluate('document.querySelector(\'div[role="feed"]\').scrollTo(0, document.querySelector(\'div[role="feed"]\').scrollHeight)')
-            page.wait_for_timeout(1000)
+            page.wait_for_timeout(1500)
+
+            # Conta quantos links existem agora
+            links_atuais = page.query_selector_all('a[href*="/maps/place/"]')
+            contagem_atual = len(links_atuais)
+
+            print(f"  Encontrados {contagem_atual} resultados...")
+
+            # Se não aumentou, incrementa contador
+            if contagem_atual == contagem_anterior:
+                tentativas_sem_novos += 1
+            else:
+                tentativas_sem_novos = 0
+                contagem_anterior = contagem_atual
 
         # Encontra todos os links de estabelecimentos
         links = page.query_selector_all('a[href*="/maps/place/"]')
@@ -88,12 +107,17 @@ class GoogleMapsExtractor(BaseExtractor):
                 urls_vistas.add(href)
                 links_unicos.append(link)
 
-        print(f"Encontrados {len(links_unicos)} estabelecimentos únicos")
+        print(f"\nRolagem completa! Total: {len(links_unicos)} estabelecimentos únicos\n")
 
-        # Limita a 10 primeiros resultados para não demorar muito
-        for i, link in enumerate(links_unicos[:10], 1):
+        # Aplica limite se especificado
+        total_a_extrair = len(links_unicos) if self.limit is None else min(self.limit, len(links_unicos))
+
+        print(f"Extraindo dados de {total_a_extrair} estabelecimento(s)...\n")
+
+        # Extrai dados de cada estabelecimento
+        for i, link in enumerate(links_unicos[:total_a_extrair], 1):
             try:
-                print(f"Extraindo estabelecimento {i}/10...")
+                print(f"[{i}/{total_a_extrair}] Extraindo...")
 
                 # Clica no resultado para abrir os detalhes
                 link.scroll_into_view_if_needed()

@@ -9,14 +9,16 @@ from extrator_leads.core.models import Lead
 class BaseExtractor(ABC):
     """Classe base para todos os extractors de leads."""
 
-    def __init__(self, url: str):
+    def __init__(self, url: str, limit: Optional[int] = None):
         """
         Inicializa o extractor.
 
         Args:
             url: URL da página para extrair dados
+            limit: Número máximo de leads a extrair (None = todos)
         """
         self.url = url
+        self.limit = limit
         self._validar_url()
 
     def _validar_url(self) -> None:

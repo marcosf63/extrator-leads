@@ -38,6 +38,12 @@ def extract(
         "--output-dir",
         "-d",
         help="Diretório onde o CSV será salvo"
+    ),
+    limit: Optional[int] = typer.Option(
+        None,
+        "--limit",
+        "-l",
+        help="Número máximo de leads a extrair (padrão: todos os disponíveis)"
     )
 ):
     """
@@ -46,7 +52,7 @@ def extract(
     Exemplo:
         extrator extract "https://maps.google.com/..."
     """
-    console.print(f"\n[bold cyan]Extrator de Leads v0.3.0[/bold cyan]\n")
+    console.print(f"\n[bold cyan]Extrator de Leads v0.3.1[/bold cyan]\n")
 
     try:
         # Cria o extractor apropriado
@@ -58,7 +64,7 @@ def extract(
             progress.add_task(description="Analisando URL...", total=None)
 
             try:
-                extractor = ExtractorFactory.criar_extractor(url)
+                extractor = ExtractorFactory.criar_extractor(url, limit=limit)
             except ValueError as e:
                 console.print(f"\n[bold red]Erro:[/bold red] {str(e)}\n")
                 raise typer.Exit(code=1)
@@ -175,7 +181,7 @@ def version():
     Exibe a versão do extrator.
     """
     console.print("\n[bold cyan]Extrator de Leads[/bold cyan]")
-    console.print("Versão: [bold]0.3.0[/bold]")
+    console.print("Versão: [bold]0.3.1[/bold]")
     console.print("Autor: Marcos <marcosf63@gmail.com>\n")
 
 
