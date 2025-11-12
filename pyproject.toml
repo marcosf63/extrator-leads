@@ -1,0 +1,11 @@
+[project]
+name = "extrator-leads"
+version = "0.1.0"
+description = "Projeto Python para extração de leads"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+authors = [
+    { name = "Marcos", email = "marcosf63@gmail.com" }
+]
+license = { text = "MIT" }
