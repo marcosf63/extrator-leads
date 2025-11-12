@@ -3,7 +3,7 @@
 ## Informações Gerais
 
 - **Nome do Projeto**: extrator-leads
-- **Versão Atual**: 0.3.1
+- **Versão Atual**: 0.3.2
 - **Versionamento**: Semantic Versioning (https://semver.org/)
 - **Autor**: Marcos <marcosf63@gmail.com>
 - **Licença**: MIT
@@ -107,6 +107,15 @@ uv run python main.py
 - `extrator version`: Exibe versão
 
 ## Histórico de Versões
+
+### 0.3.2 (2025-11-12)
+- **fix**: Correção crítica na extração de websites do Google Maps
+- **feat**: Adicionados novos seletores CSS para localizar botão de website
+- **feat**: Implementado parsing de URLs redirecionadas pelo Google (/url?q=...)
+- **feat**: Aumentado tempo de espera de 2s para 3s após clicar em estabelecimento
+- **feat**: Adicionada espera explícita para botões de ação carregarem
+- **refactor**: Método `_extrair_website()` agora reutilizado em extração em lote
+- **perf**: Melhoria na taxa de sucesso de captura de websites
 
 ### 0.3.1 (2025-11-12)
 - **feat**: Implementação de rolagem infinita para páginas de busca do Google Maps

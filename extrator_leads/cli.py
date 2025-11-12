@@ -52,7 +52,7 @@ def extract(
     Exemplo:
         extrator extract "https://maps.google.com/..."
     """
-    console.print(f"\n[bold cyan]Extrator de Leads v0.3.1[/bold cyan]\n")
+    console.print(f"\n[bold cyan]Extrator de Leads v0.3.2[/bold cyan]\n")
 
     try:
         # Cria o extractor apropriado
@@ -181,7 +181,7 @@ def version():
     Exibe a versão do extrator.
     """
     console.print("\n[bold cyan]Extrator de Leads[/bold cyan]")
-    console.print("Versão: [bold]0.3.1[/bold]")
+    console.print("Versão: [bold]0.3.2[/bold]")
     console.print("Autor: Marcos <marcosf63@gmail.com>\n")
 
 

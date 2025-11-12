@@ -123,7 +123,13 @@ class GoogleMapsExtractor(BaseExtractor):
                 link.scroll_into_view_if_needed()
                 page.wait_for_timeout(300)
                 link.click()
-                page.wait_for_timeout(2000)  # Aguarda detalhes carregarem
+                page.wait_for_timeout(3000)  # Aguarda detalhes carregarem
+
+                # Aguarda os botões de ação (telefone, website) carregarem
+                try:
+                    page.wait_for_selector('button[data-item-id], a[data-item-id]', timeout=2000)
+                except:
+                    pass  # Continua mesmo se não encontrar
 
                 # Extrai nome
                 nome = None
@@ -156,13 +162,7 @@ class GoogleMapsExtractor(BaseExtractor):
                         telefone = match.group()
 
                 # Extrai website
-                website = None
-                website_btn = page.query_selector('a[data-item-id*="authority"]')
-                if website_btn:
-                    href = website_btn.get_attribute('href')
-                    # Valida se é uma URL válida
-                    if href and (href.startswith('http://') or href.startswith('https://')):
-                        website = href
+                website = self._extrair_website(page)
 
                 # Cria o lead
                 lead = Lead(
@@ -266,11 +266,16 @@ class GoogleMapsExtractor(BaseExtractor):
 
     def _extrair_website(self, page) -> Optional[str]:
         """Extrai o website do estabelecimento."""
+        from urllib.parse import urlparse, parse_qs
+
         seletores = [
             'a[data-item-id*="authority"]',
             'a[aria-label*="Website"]',
             'a[aria-label*="Site"]',
+            'a[data-tooltip*="Website"]',
+            'a[data-tooltip*="Site"]',
             'button[data-item-id*="authority"]',
+            'a[href*="/url?"]',  # Links redirecionados pelo Google
         ]
 
         for seletor in seletores:
@@ -283,8 +288,20 @@ class GoogleMapsExtractor(BaseExtractor):
                         if website and 'authority' in website:
                             website = website.split('authority:')[-1]
 
-                    if website and website.startswith('http'):
-                        return self._limpar_texto(website)
+                    if website:
+                        # Trata URLs redirecionadas pelo Google (/url?q=...)
+                        if '/url?' in website and 'q=' in website:
+                            try:
+                                parsed = urlparse(website)
+                                params = parse_qs(parsed.query)
+                                if 'q' in params:
+                                    website = params['q'][0]
+                            except:
+                                pass
+
+                        # Valida se é uma URL válida
+                        if website.startswith('http'):
+                            return self._limpar_texto(website)
             except:
                 continue
 
