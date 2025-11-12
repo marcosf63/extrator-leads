@@ -1,47 +1,132 @@
 # Extrator de Leads
 
-Projeto Python para extra��o de leads.
+Ferramenta CLI para extração de leads de múltiplas plataformas (Google Maps, Facebook, LinkedIn).
 
-## Vers�o
+## Versão
 
-0.1.0
+0.2.0
+
+## Características
+
+- Extração de leads do Google Maps (nome, telefone, email, website)
+- Arquitetura expansível para Facebook e LinkedIn (em desenvolvimento)
+- Exportação automática para CSV
+- Interface CLI intuitiva com Typer
+- Output colorido e formatado com Rich
 
 ## Requisitos
 
 - Python >= 3.13
 - uv (gerenciador de pacotes)
 
-## Instala��o
+## Instalação
 
 ```bash
-# Clonar o reposit�rio
-git clone https://github.com/seu-usuario/extrator-leads.git
+# Clonar o repositório
+git clone https://github.com/marcosf63/extrator-leads.git
 cd extrator-leads
 
-# Criar ambiente virtual e instalar depend�ncias
-uv venv
-source .venv/bin/activate  # No Windows: .venv\Scripts\activate
-uv pip install -e .
+# Instalar dependências com uv
+uv sync
+
+# Instalar browsers do Playwright
+uv run playwright install chromium
 ```
 
 ## Uso
 
+### Extrair lead de uma URL
+
 ```bash
-python main.py
+# Usar o comando instalado
+extrator extract "https://maps.google.com/..."
+
+# Ou executar via uv
+uv run extrator extract "https://maps.google.com/..."
+
+# Especificar nome do arquivo de saída
+extrator extract "URL" --output meus_leads.csv
+
+# Adicionar a um arquivo existente
+extrator extract "URL" --output leads.csv --append
+```
+
+### Listar arquivos CSV gerados
+
+```bash
+extrator list-files
+```
+
+### Ver plataformas suportadas
+
+```bash
+extrator platforms
+```
+
+### Ver versão
+
+```bash
+extrator version
+```
+
+## Estrutura do Projeto
+
+```
+extrator_leads/
+├── extrator_leads/          # Pacote principal
+│   ├── cli.py              # Interface CLI
+│   ├── core/               # Lógica central
+│   │   ├── models.py       # Modelos de dados (Lead)
+│   │   ├── extractor_factory.py  # Factory Pattern
+│   │   └── csv_exporter.py # Exportação CSV
+│   └── extractors/         # Extractors por plataforma
+│       ├── base.py         # Classe base abstrata
+│       ├── google_maps.py  # Google Maps (implementado)
+│       ├── facebook.py     # Facebook (em desenvolvimento)
+│       └── linkedin.py     # LinkedIn (em desenvolvimento)
+├── data/                   # CSVs gerados
+├── tests/                  # Testes
+└── main.py                 # Entry point
 ```
 
 ## Desenvolvimento
 
-Este projeto usa `uv` para gerenciamento de depend�ncias.
+Este projeto usa `uv` para gerenciamento de dependências.
 
 ```bash
-# Adicionar nova depend�ncia
+# Adicionar nova dependência
 uv add nome-do-pacote
 
-# Atualizar depend�ncias
+# Adicionar dependência de desenvolvimento
+uv add --dev nome-do-pacote
+
+# Sincronizar dependências
 uv sync
+
+# Executar testes (quando implementados)
+uv run pytest
 ```
 
-## Licen�a
+## Plataformas Suportadas
+
+| Plataforma | Status | Descrição |
+|------------|--------|-----------|
+| Google Maps | ✅ Disponível | Extração completa de dados |
+| Facebook | 🚧 Em desenvolvimento | Planejado para versão futura |
+| LinkedIn | 🚧 Em desenvolvimento | Planejado para versão futura |
+
+## Tecnologias
+
+- **Typer**: Framework CLI moderno
+- **Rich**: Output formatado no terminal
+- **Pydantic**: Validação de dados
+- **Playwright**: Automação web
+- **Pandas**: Manipulação de dados e CSV
+
+## Licença
 
 MIT
+
+## Autor
+
+Marcos <marcosf63@gmail.com>

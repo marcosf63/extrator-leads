@@ -1,11 +1,27 @@
 [project]
 name = "extrator-leads"
-version = "0.1.0"
-description = "Projeto Python para extração de leads"
+version = "0.2.0"
+description = "Ferramenta CLI para extração de leads de múltiplas plataformas (Google Maps, Facebook, LinkedIn)"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "typer>=0.12.0",
+    "rich>=13.7.0",
+    "pydantic>=2.5.0",
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.0",
+    "playwright>=1.40.0",
+    "pandas>=2.1.0",
+    "python-dotenv>=1.0.0",
+]
 authors = [
     { name = "Marcos", email = "marcosf63@gmail.com" }
 ]
 license = { text = "MIT" }
+
+[project.scripts]
+extrator = "extrator_leads.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
