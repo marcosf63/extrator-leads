@@ -3,7 +3,7 @@
 ## Informações Gerais
 
 - **Nome do Projeto**: extrator-leads
-- **Versão Atual**: 0.3.2
+- **Versão Atual**: 0.3.3
 - **Versionamento**: Semantic Versioning (https://semver.org/)
 - **Autor**: Marcos <marcosf63@gmail.com>
 - **Licença**: MIT
@@ -107,6 +107,13 @@ uv run python main.py
 - `extrator version`: Exibe versão
 
 ## Histórico de Versões
+
+### 0.3.3 (2025-11-12)
+- **perf**: Implementada detecção inteligente de atualização do painel de detalhes
+- **perf**: Adicionada verificação de visibilidade de elementos antes de extrair website
+- **perf**: Aguarda mudança do h1 antes de extrair dados (evita cache do DOM)
+- **perf**: Adicionado tempo adicional de 500ms antes de extrair website
+- **docs**: Documentado comportamento de websites compartilhados em endereços comerciais
 
 ### 0.3.2 (2025-11-12)
 - **fix**: Correção crítica na extração de websites do Google Maps

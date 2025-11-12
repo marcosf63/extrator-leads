@@ -1,6 +1,6 @@
 [project]
 name = "extrator-leads"
-version = "0.3.2"
+version = "0.3.3"
 description = "Ferramenta CLI para extração de leads de múltiplas plataformas (Google Maps, Facebook, LinkedIn)"
 readme = "README.md"
 requires-python = ">=3.13"

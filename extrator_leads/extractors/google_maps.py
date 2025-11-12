@@ -119,15 +119,52 @@ class GoogleMapsExtractor(BaseExtractor):
             try:
                 print(f"[{i}/{total_a_extrair}] Extraindo...")
 
+                # Extrai o nome esperado do link antes de clicar
+                nome_esperado = None
+                try:
+                    nome_link_elem = link.query_selector('[class*="fontHeadline"], div[aria-label]')
+                    if nome_link_elem:
+                        nome_esperado = self._limpar_texto(nome_link_elem.inner_text())
+                except:
+                    pass
+
+                # Salva o nome atual do h1 antes de clicar (para detectar mudança)
+                nome_anterior = None
+                try:
+                    h1_elem = page.query_selector('h1.DUwDvf, h1')
+                    if h1_elem:
+                        nome_anterior = self._limpar_texto(h1_elem.inner_text())
+                except:
+                    pass
+
                 # Clica no resultado para abrir os detalhes
                 link.scroll_into_view_if_needed()
                 page.wait_for_timeout(300)
                 link.click()
-                page.wait_for_timeout(3000)  # Aguarda detalhes carregarem
+
+                # Aguarda que o painel mude (h1 diferente ou timeout)
+                tentativas = 0
+                max_tentativas = 15  # 15 x 200ms = 3 segundos
+                painel_atualizado = False
+
+                while tentativas < max_tentativas and not painel_atualizado:
+                    page.wait_for_timeout(200)
+                    tentativas += 1
+
+                    try:
+                        h1_elem = page.query_selector('h1.DUwDvf, h1')
+                        if h1_elem:
+                            nome_atual = self._limpar_texto(h1_elem.inner_text())
+                            # Painel mudou se o nome é diferente do anterior
+                            if nome_atual and nome_atual != nome_anterior:
+                                painel_atualizado = True
+                                break
+                    except:
+                        pass
 
                 # Aguarda os botões de ação (telefone, website) carregarem
                 try:
-                    page.wait_for_selector('button[data-item-id], a[data-item-id]', timeout=2000)
+                    page.wait_for_selector('button[data-item-id], a[data-item-id]', timeout=1000)
                 except:
                     pass  # Continua mesmo se não encontrar
 
@@ -161,7 +198,8 @@ class GoogleMapsExtractor(BaseExtractor):
                     if match:
                         telefone = match.group()
 
-                # Extrai website
+                # Extrai website (com adicional de tempo para garantir carregamento)
+                page.wait_for_timeout(500)  # Pequena espera adicional
                 website = self._extrair_website(page)
 
                 # Cria o lead
@@ -282,6 +320,14 @@ class GoogleMapsExtractor(BaseExtractor):
             try:
                 elemento = page.query_selector(seletor)
                 if elemento:
+                    # Verifica se o elemento está visível (não de um painel anterior)
+                    try:
+                        is_visible = elemento.is_visible()
+                        if not is_visible:
+                            continue
+                    except:
+                        pass
+
                     website = elemento.get_attribute('href')
                     if not website:
                         website = elemento.get_attribute('data-item-id')

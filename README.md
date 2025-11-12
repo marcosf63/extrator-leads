@@ -4,7 +4,7 @@ Ferramenta CLI para extração de leads de múltiplas plataformas (Google Maps, 
 
 ## Versão
 
-0.3.2
+0.3.3
 
 ## Características
 
