@@ -1,7 +1,7 @@
 """Extractor para Google Maps."""
 
 import re
-from typing import Optional
+from typing import List, Optional
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 from extrator_leads.extractors.base import BaseExtractor
 from extrator_leads.core.models import Lead
@@ -21,12 +21,16 @@ class GoogleMapsExtractor(BaseExtractor):
         padrao = r'(maps\.google\.|google\.[a-z]+/maps|goo\.gl/maps)'
         return bool(re.search(padrao, url, re.IGNORECASE))
 
-    def extract(self) -> Optional[Lead]:
+    def _eh_pagina_busca(self, url: str) -> bool:
+        """Verifica se a URL é uma página de busca ou de estabelecimento individual."""
+        return '/search/' in url or '/maps/search/' in url
+
+    def extract(self) -> List[Lead]:
         """
-        Extrai dados de lead do Google Maps.
+        Extrai dados de lead(s) do Google Maps.
 
         Returns:
-            Lead extraído ou None se não encontrado
+            Lista de leads extraídos
         """
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -38,30 +42,17 @@ class GoogleMapsExtractor(BaseExtractor):
 
             try:
                 # Navega para a página
-                page.goto(self.url, wait_until="networkidle", timeout=30000)
-                page.wait_for_timeout(2000)  # Aguarda carregamento adicional
+                page.goto(self.url, wait_until="domcontentloaded", timeout=30000)
+                page.wait_for_timeout(3000)  # Aguarda carregamento adicional
 
-                # Extrai o nome do estabelecimento
-                nome = self._extrair_nome(page)
-                if not nome:
-                    return None
+                # Verifica se é página de busca ou individual
+                if self._eh_pagina_busca(self.url):
+                    leads = self._extrair_resultados_busca(page)
+                else:
+                    lead = self._extrair_estabelecimento_individual(page)
+                    leads = [lead] if lead else []
 
-                # Extrai outros dados
-                telefone = self._extrair_telefone(page)
-                website = self._extrair_website(page)
-                email = self._extrair_email(page)
-
-                # Cria o lead
-                lead = Lead(
-                    nome=nome,
-                    email=email,
-                    website=website,
-                    telefone=telefone,
-                    fonte=self.fonte,
-                    url_origem=self.url
-                )
-
-                return lead
+                return leads
 
             except PlaywrightTimeoutError:
                 raise Exception(f"Timeout ao carregar a página: {self.url}")
@@ -69,6 +60,128 @@ class GoogleMapsExtractor(BaseExtractor):
                 raise Exception(f"Erro ao extrair dados do Google Maps: {str(e)}")
             finally:
                 browser.close()
+
+    def _extrair_resultados_busca(self, page) -> List[Lead]:
+        """Extrai dados de múltiplos estabelecimentos de uma página de busca."""
+        leads = []
+
+        # Aguarda a lista de resultados carregar
+        try:
+            page.wait_for_selector('div[role="feed"]', timeout=10000)
+        except:
+            return leads
+
+        # Rola a página para carregar mais resultados
+        for _ in range(2):
+            page.evaluate('document.querySelector(\'div[role="feed"]\').scrollTo(0, document.querySelector(\'div[role="feed"]\').scrollHeight)')
+            page.wait_for_timeout(1000)
+
+        # Encontra todos os links de estabelecimentos
+        links = page.query_selector_all('a[href*="/maps/place/"]')
+
+        # Remove duplicatas mantendo ordem
+        urls_vistas = set()
+        links_unicos = []
+        for link in links:
+            href = link.get_attribute('href')
+            if href and href not in urls_vistas:
+                urls_vistas.add(href)
+                links_unicos.append(link)
+
+        print(f"Encontrados {len(links_unicos)} estabelecimentos únicos")
+
+        # Limita a 10 primeiros resultados para não demorar muito
+        for i, link in enumerate(links_unicos[:10], 1):
+            try:
+                print(f"Extraindo estabelecimento {i}/10...")
+
+                # Clica no resultado para abrir os detalhes
+                link.scroll_into_view_if_needed()
+                page.wait_for_timeout(300)
+                link.click()
+                page.wait_for_timeout(2000)  # Aguarda detalhes carregarem
+
+                # Extrai nome
+                nome = None
+                nome_seletores = ['h1.DUwDvf', 'h1', '[class*="fontHeadline"]']
+                for seletor in nome_seletores:
+                    elem = page.query_selector(seletor)
+                    if elem:
+                        nome = self._limpar_texto(elem.inner_text())
+                        if nome and len(nome) > 3:
+                            break
+
+                if not nome:
+                    print(f"  ✗ Nome não encontrado")
+                    continue
+
+                # Extrai telefone
+                telefone = None
+                telefone_btn = page.query_selector('button[data-item-id*="phone"]')
+                if telefone_btn:
+                    tel_attr = telefone_btn.get_attribute('data-item-id')
+                    if tel_attr and 'phone:tel:' in tel_attr:
+                        telefone = tel_attr.replace('phone:tel:', '').replace('tel:', '')
+
+                # Se não achou pelo botão, procura no conteúdo
+                if not telefone:
+                    content = page.content()
+                    telefone_pattern = r'\(\d{2}\)\s*\d{4,5}[-\s]?\d{4}'
+                    match = re.search(telefone_pattern, content)
+                    if match:
+                        telefone = match.group()
+
+                # Extrai website
+                website = None
+                website_btn = page.query_selector('a[data-item-id*="authority"]')
+                if website_btn:
+                    href = website_btn.get_attribute('href')
+                    # Valida se é uma URL válida
+                    if href and (href.startswith('http://') or href.startswith('https://')):
+                        website = href
+
+                # Cria o lead
+                lead = Lead(
+                    nome=nome,
+                    email=None,
+                    website=website,
+                    telefone=telefone,
+                    fonte=self.fonte,
+                    url_origem=self.url
+                )
+
+                leads.append(lead)
+                print(f"  ✓ {nome[:40]} - {telefone or 'Sem telefone'}")
+
+            except Exception as e:
+                print(f"  ✗ Erro: {str(e)[:50]}")
+                continue
+
+        return leads
+
+    def _extrair_estabelecimento_individual(self, page) -> Lead | None:
+        """Extrai dados de um estabelecimento individual."""
+        # Extrai o nome do estabelecimento
+        nome = self._extrair_nome(page)
+        if not nome:
+            return None
+
+        # Extrai outros dados
+        telefone = self._extrair_telefone(page)
+        website = self._extrair_website(page)
+        email = self._extrair_email(page)
+
+        # Cria o lead
+        lead = Lead(
+            nome=nome,
+            email=email,
+            website=website,
+            telefone=telefone,
+            fonte=self.fonte,
+            url_origem=self.url
+        )
+
+        return lead
 
     def _extrair_nome(self, page) -> Optional[str]:
         """Extrai o nome do estabelecimento."""

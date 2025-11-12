@@ -1,7 +1,7 @@
 """Classe base abstrata para extractors de leads."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, List
 from urllib.parse import urlparse
 from extrator_leads.core.models import Lead
 
@@ -29,12 +29,12 @@ class BaseExtractor(ABC):
             raise ValueError(f"Erro ao validar URL: {str(e)}")
 
     @abstractmethod
-    def extract(self) -> Optional[Lead]:
+    def extract(self) -> List[Lead]:
         """
-        Extrai dados de lead da URL.
+        Extrai dados de lead(s) da URL.
 
         Returns:
-            Lead extraído ou None se não encontrado
+            Lista de leads extraídos (pode ser vazia)
 
         Raises:
             Exception: Se houver erro na extração

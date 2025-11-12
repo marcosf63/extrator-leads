@@ -46,7 +46,7 @@ def extract(
     Exemplo:
         extrator extract "https://maps.google.com/..."
     """
-    console.print(f"\n[bold cyan]Extrator de Leads v0.2.0[/bold cyan]\n")
+    console.print(f"\n[bold cyan]Extrator de Leads v0.3.0[/bold cyan]\n")
 
     try:
         # Cria o extractor apropriado
@@ -69,7 +69,7 @@ def extract(
             progress.add_task(description=f"Extraindo dados de {extractor.fonte}...", total=None)
 
             try:
-                lead = extractor.extract()
+                leads = extractor.extract()
             except NotImplementedError as e:
                 console.print(f"\n[bold yellow]Aviso:[/bold yellow] {str(e)}\n")
                 raise typer.Exit(code=1)
@@ -77,20 +77,24 @@ def extract(
                 console.print(f"\n[bold red]Erro na extração:[/bold red] {str(e)}\n")
                 raise typer.Exit(code=1)
 
-            if not lead:
+            if not leads:
                 console.print("\n[bold yellow]Nenhum lead encontrado na URL fornecida.[/bold yellow]\n")
                 raise typer.Exit(code=1)
 
         # Exibe dados extraídos
-        console.print("[green]✓[/green] Dados extraídos com sucesso!\n")
-        _exibir_lead(lead)
+        console.print(f"[green]✓[/green] {len(leads)} lead(s) extraído(s) com sucesso!\n")
+
+        if len(leads) == 1:
+            _exibir_lead(leads[0])
+        else:
+            _exibir_leads_tabela(leads)
 
         # Exporta para CSV
         exporter = CSVExporter(output_dir=output_dir)
 
         try:
-            caminho = exporter.exportar_lead(lead, filename=output, append=append)
-            console.print(f"\n[green]✓[/green] Lead salvo em: [bold]{caminho}[/bold]\n")
+            caminho = exporter.exportar(leads, filename=output, append=append)
+            console.print(f"\n[green]✓[/green] {len(leads)} lead(s) salvo(s) em: [bold]{caminho}[/bold]\n")
         except Exception as e:
             console.print(f"\n[bold red]Erro ao salvar CSV:[/bold red] {str(e)}\n")
             raise typer.Exit(code=1)
@@ -171,7 +175,7 @@ def version():
     Exibe a versão do extrator.
     """
     console.print("\n[bold cyan]Extrator de Leads[/bold cyan]")
-    console.print("Versão: [bold]0.2.0[/bold]")
+    console.print("Versão: [bold]0.3.0[/bold]")
     console.print("Autor: Marcos <marcosf63@gmail.com>\n")
 
 
@@ -186,6 +190,25 @@ def _exibir_lead(lead):
     table.add_row("Email", lead.email or "[dim]N/A[/dim]")
     table.add_row("Website", str(lead.website) if lead.website else "[dim]N/A[/dim]")
     table.add_row("Fonte", lead.fonte)
+
+    console.print(table)
+
+
+def _exibir_leads_tabela(leads):
+    """Exibe múltiplos leads em uma tabela compacta."""
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Nome", style="cyan")
+    table.add_column("Telefone", style="green")
+    table.add_column("Website", style="blue")
+
+    for idx, lead in enumerate(leads, 1):
+        table.add_row(
+            str(idx),
+            lead.nome[:40] + "..." if len(lead.nome) > 40 else lead.nome,
+            lead.telefone or "[dim]N/A[/dim]",
+            str(lead.website)[:30] + "..." if lead.website and len(str(lead.website)) > 30 else (str(lead.website) if lead.website else "[dim]N/A[/dim]")
+        )
 
     console.print(table)
 

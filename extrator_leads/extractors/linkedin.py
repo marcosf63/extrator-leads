@@ -1,7 +1,7 @@
 """Extractor para LinkedIn (em desenvolvimento)."""
 
 import re
-from typing import Optional
+from typing import List
 from extrator_leads.extractors.base import BaseExtractor
 from extrator_leads.core.models import Lead
 
@@ -20,12 +20,12 @@ class LinkedInExtractor(BaseExtractor):
         padrao = r'linkedin\.com'
         return bool(re.search(padrao, url, re.IGNORECASE))
 
-    def extract(self) -> Optional[Lead]:
+    def extract(self) -> List[Lead]:
         """
-        Extrai dados de lead do LinkedIn.
+        Extrai dados de lead(s) do LinkedIn.
 
         Returns:
-            Lead extraído ou None se não encontrado
+            Lista de leads extraídos
 
         Raises:
             NotImplementedError: Esta funcionalidade ainda não foi implementada
