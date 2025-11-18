@@ -10,6 +10,15 @@ from extrator_leads.core.models import Lead
 class GoogleMapsExtractor(BaseExtractor):
     """Extractor de leads do Google Maps."""
 
+    # Seletores
+    SELECTORS = {
+        'feed': 'div[role="feed"]',
+        'result_link': 'a[href*="/maps/place/"]',
+        'name': ['h1.DUwDvf', 'h1[class*="title"]', 'h1', '[data-attrid="title"]', '[class*="fontHeadline"]'],
+        'phone_btn': 'button[data-item-id*="phone"]',
+        'website_btn': ['a[data-item-id*="authority"]', 'a[aria-label*="Website"]', 'a[aria-label*="Site"]', 'a[data-tooltip*="Website"]', 'a[data-tooltip*="Site"]', 'button[data-item-id*="authority"]', 'a[href*="/url?"]'],
+    }
+
     @property
     def fonte(self) -> str:
         """Retorna o nome da fonte."""
@@ -71,7 +80,7 @@ class GoogleMapsExtractor(BaseExtractor):
         except:
             return leads
 
-        print("Rolando a página para carregar todos os resultados...")
+        self._log("Rolando a página para carregar todos os resultados...")
 
         # Rola a página até carregar todos os resultados
         tentativas_sem_novos = 0
@@ -79,14 +88,14 @@ class GoogleMapsExtractor(BaseExtractor):
 
         while tentativas_sem_novos < 3:
             # Rola até o final do feed
-            page.evaluate('document.querySelector(\'div[role="feed"]\').scrollTo(0, document.querySelector(\'div[role="feed"]\').scrollHeight)')
+            page.evaluate(f'document.querySelector(\'{self.SELECTORS["feed"]}\').scrollTo(0, document.querySelector(\'{self.SELECTORS["feed"]}\').scrollHeight)')
             page.wait_for_timeout(1500)
 
             # Conta quantos links existem agora
             links_atuais = page.query_selector_all('a[href*="/maps/place/"]')
             contagem_atual = len(links_atuais)
 
-            print(f"  Encontrados {contagem_atual} resultados...")
+            self._log(f"  Encontrados {contagem_atual} resultados...")
 
             # Se não aumentou, incrementa contador
             if contagem_atual == contagem_anterior:
@@ -107,17 +116,17 @@ class GoogleMapsExtractor(BaseExtractor):
                 urls_vistas.add(href)
                 links_unicos.append(link)
 
-        print(f"\nRolagem completa! Total: {len(links_unicos)} estabelecimentos únicos\n")
+        self._log(f"\nRolagem completa! Total: {len(links_unicos)} estabelecimentos únicos\n")
 
         # Aplica limite se especificado
         total_a_extrair = len(links_unicos) if self.limit is None else min(self.limit, len(links_unicos))
 
-        print(f"Extraindo dados de {total_a_extrair} estabelecimento(s)...\n")
+        self._log(f"Extraindo dados de {total_a_extrair} estabelecimento(s)...\n")
 
         # Extrai dados de cada estabelecimento
         for i, link in enumerate(links_unicos[:total_a_extrair], 1):
             try:
-                print(f"[{i}/{total_a_extrair}] Extraindo...")
+                self._log(f"[{i}/{total_a_extrair}] Extraindo...")
 
                 # Extrai o nome esperado do link antes de clicar
                 nome_esperado = None
@@ -170,8 +179,7 @@ class GoogleMapsExtractor(BaseExtractor):
 
                 # Extrai nome
                 nome = None
-                nome_seletores = ['h1.DUwDvf', 'h1', '[class*="fontHeadline"]']
-                for seletor in nome_seletores:
+                for seletor in self.SELECTORS['name']:
                     elem = page.query_selector(seletor)
                     if elem:
                         nome = self._limpar_texto(elem.inner_text())
@@ -179,7 +187,7 @@ class GoogleMapsExtractor(BaseExtractor):
                             break
 
                 if not nome:
-                    print(f"  ✗ Nome não encontrado")
+                    self._log(f"  ✗ Nome não encontrado")
                     continue
 
                 # Extrai telefone
@@ -213,10 +221,10 @@ class GoogleMapsExtractor(BaseExtractor):
                 )
 
                 leads.append(lead)
-                print(f"  ✓ {nome[:40]} - {telefone or 'Sem telefone'}")
+                self._log(f"  ✓ {nome[:40]} - {telefone or 'Sem telefone'}")
 
             except Exception as e:
-                print(f"  ✗ Erro: {str(e)[:50]}")
+                self._log(f"  ✗ Erro: {str(e)[:50]}")
                 continue
 
         return leads
@@ -247,14 +255,7 @@ class GoogleMapsExtractor(BaseExtractor):
 
     def _extrair_nome(self, page) -> Optional[str]:
         """Extrai o nome do estabelecimento."""
-        seletores = [
-            'h1.DUwDvf',
-            'h1[class*="title"]',
-            'h1',
-            '[data-attrid="title"]',
-        ]
-
-        for seletor in seletores:
+        for seletor in self.SELECTORS['name']:
             try:
                 elemento = page.query_selector(seletor)
                 if elemento:
@@ -306,17 +307,7 @@ class GoogleMapsExtractor(BaseExtractor):
         """Extrai o website do estabelecimento."""
         from urllib.parse import urlparse, parse_qs
 
-        seletores = [
-            'a[data-item-id*="authority"]',
-            'a[aria-label*="Website"]',
-            'a[aria-label*="Site"]',
-            'a[data-tooltip*="Website"]',
-            'a[data-tooltip*="Site"]',
-            'button[data-item-id*="authority"]',
-            'a[href*="/url?"]',  # Links redirecionados pelo Google
-        ]
-
-        for seletor in seletores:
+        for seletor in self.SELECTORS['website_btn']:
             try:
                 elemento = page.query_selector(seletor)
                 if elemento:

@@ -52,9 +52,8 @@ class Lead(BaseModel):
         }
         return data
 
-    class Config:
-        """Configuração do modelo."""
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "nome": "Empresa Exemplo",
                 "email": "contato@exemplo.com",
@@ -64,3 +63,4 @@ class Lead(BaseModel):
                 "url_origem": "https://maps.google.com/example"
             }
         }
+    }

@@ -18,13 +18,14 @@ class ExtractorFactory:
     ]
 
     @classmethod
-    def criar_extractor(cls, url: str, limit: int = None) -> BaseExtractor:
+    def criar_extractor(cls, url: str, limit: int = None, callback=None) -> BaseExtractor:
         """
         Cria o extractor apropriado baseado na URL.
 
         Args:
             url: URL para extrair dados
             limit: Número máximo de leads a extrair (None = todos)
+            callback: Função para reportar progresso (opcional)
 
         Returns:
             Instância do extractor apropriado
@@ -34,7 +35,7 @@ class ExtractorFactory:
         """
         for extractor_class in cls._extractors:
             if extractor_class.pode_extrair(url):
-                return extractor_class(url, limit=limit)
+                return extractor_class(url, limit=limit, callback=callback)
 
         # Nenhum extractor encontrado
         plataformas_suportadas = [

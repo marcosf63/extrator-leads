@@ -63,8 +63,12 @@ def extract(
         ) as progress:
             progress.add_task(description="Analisando URL...", total=None)
 
+            def progress_callback(msg: str):
+                """Callback para exibir logs de progresso."""
+                progress.console.print(f"[dim]{msg}[/dim]")
+
             try:
-                extractor = ExtractorFactory.criar_extractor(url, limit=limit)
+                extractor = ExtractorFactory.criar_extractor(url, limit=limit, callback=progress_callback)
             except ValueError as e:
                 console.print(f"\n[bold red]Erro:[/bold red] {str(e)}\n")
                 raise typer.Exit(code=1)
